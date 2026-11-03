@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fixmate/view/reschedule.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart'; // Import url_launcher for phone dialpad
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/bookdetails model.dart';
 import '../viewmodel/bookdetails viewmodel.dart';
@@ -81,6 +82,22 @@ class _DetailsState extends State<Details> {
     );
   }
 
+  void _showAlreadyRescheduledDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Reschedule Limit Reached"),
+        content: const Text("You cannot reschedule anymore."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<BookingDetailsViewModel>(
@@ -108,6 +125,8 @@ class _DetailsState extends State<Details> {
               var bookingDoc = bookingSnapshot.data!.docs.first;
               var bookingData = bookingDoc.data() as Map<String, dynamic>;
               BookingDetailsModel booking = BookingDetailsModel.fromMap(bookingData, bookingDoc.id);
+
+              bool isAlreadyRescheduled = bookingData['isRescheduled'] ?? false;
 
               return StreamBuilder<DocumentSnapshot>(
                 stream: viewModel.getPartnerStream(booking.partnerId),
@@ -238,22 +257,7 @@ class _DetailsState extends State<Details> {
                                               ),
                                             ),
                                           ],
-                                          const SizedBox(height: 7),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                CupertinoIcons.star_fill,
-                                                color: Colors.amber[700],
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(booking.rating,
-                                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                              const SizedBox(width: 10),
-                                              const Text("(322)",
-                                                  style: TextStyle(fontSize: 16, color: Colors.grey)),
-                                            ],
-                                          ),
+
                                         ],
                                       ),
                                     ),
@@ -270,7 +274,10 @@ class _DetailsState extends State<Details> {
                                   children: [
                                     const Text("Date & Time", style: TextStyle(fontSize: 17)),
                                     const Spacer(),
-                                    Text(booking.date, style: const TextStyle(fontSize: 16)),
+                                    Text(
+                                      "${booking.date} at ${booking.time}",
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -460,23 +467,32 @@ class _DetailsState extends State<Details> {
                                 padding: const EdgeInsets.only(left: 15.0),
                                 child: GestureDetector(
                                   onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const Booknow()),
-                                    );
+                                    if (isAlreadyRescheduled) {
+                                      _showAlreadyRescheduledDialog(context);
+                                    } else {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => Reschedule(
+                                            partnerId: booking.partnerId,
+                                            existingDocId: booking.id,
+                                          ),
+                                        ),
+                                      );
+                                    }
                                   },
                                   child: Container(
                                     height: 58,
                                     decoration: BoxDecoration(
-                                      color: Colors.blue,
+                                      color: isAlreadyRescheduled ? Colors.grey : Colors.blue,
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        const Text(
-                                          "Reschedule",
-                                          style: TextStyle(
+                                        Text(
+                                          isAlreadyRescheduled ? "Rescheduled" : "Reschedule",
+                                          style: const TextStyle(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.white,

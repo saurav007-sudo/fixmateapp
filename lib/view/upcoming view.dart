@@ -23,14 +23,35 @@ class _UpcomingsState extends State<Upcomings> {
         .snapshots();
   }
 
+  // Helper method to fetch basePrice from partners collection
+  Future<double> _fetchPartnerBasePrice(String? partnerId, double fallbackPrice) async {
+    if (partnerId == null || partnerId.isEmpty) return fallbackPrice;
+    try {
+      // Check 'partners' collection first
+      var doc = await FirebaseFirestore.instance.collection('partners').doc(partnerId).get();
+      if (doc.exists && doc.data()?['basePrice'] != null) {
+        return double.tryParse(doc.data()!['basePrice'].toString()) ?? fallbackPrice;
+      }
+
+      // Fallback check 'partner' collection (singular)
+      var docSingular = await FirebaseFirestore.instance.collection('partner').doc(partnerId).get();
+      if (docSingular.exists && docSingular.data()?['basePrice'] != null) {
+        return double.tryParse(docSingular.data()!['basePrice'].toString()) ?? fallbackPrice;
+      }
+    } catch (e) {
+      debugPrint("Error fetching partner base price: $e");
+    }
+    return fallbackPrice;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF3FAFF),
+      backgroundColor: const Color(0xFFF3FAFF),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
+          const Padding(
             padding: EdgeInsets.only(left: 20, top: 40, bottom: 10),
             child: Text(
               "My Bookings",
@@ -46,11 +67,11 @@ class _UpcomingsState extends State<Upcomings> {
               stream: getUpcomingBookingsStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
+                  return const Center(
                     child: Text(
                       "No upcoming bookings found.",
                       style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -68,17 +89,15 @@ class _UpcomingsState extends State<Upcomings> {
 
                     String professionalName = bookingData['name'] ?? "Suresh Babu";
                     String serviceName = bookingData['serviceName'] ?? "AC Service";
+                    String? partnerId = bookingData['partnerId'];
 
-                    double displayPrice = 299.0;
+                    double initialPrice = 299.0;
                     var rawPrice = bookingData['basePrice'] ?? bookingData['price'];
 
                     if (rawPrice != null) {
                       String cleanedPrice = rawPrice.toString().replaceAll(RegExp(r'[^\d]'), '');
-                      displayPrice = double.tryParse(cleanedPrice) ?? 299.0;
+                      initialPrice = double.tryParse(cleanedPrice) ?? 299.0;
                     }
-
-                    String rating = bookingData['rating']?.toString() ?? "4.9";
-                    String distance = bookingData['distance']?.toString() ?? "2.2 KM";
 
                     String? profileImageUrl = bookingData['profileImage'] ??
                         bookingData['image'] ??
@@ -89,11 +108,11 @@ class _UpcomingsState extends State<Upcomings> {
                     if (profileImageUrl != null && profileImageUrl.startsWith('http')) {
                       avatarImageProvider = NetworkImage(profileImageUrl);
                     } else {
-                      avatarImageProvider = AssetImage("lib/asset/44-extractpics.jpg");
+                      avatarImageProvider = const AssetImage("lib/asset/44-extractpics.jpg");
                     }
 
                     return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       child: GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -113,7 +132,7 @@ class _UpcomingsState extends State<Upcomings> {
                           child: Row(
                             children: [
                               Padding(
-                                padding: EdgeInsets.only(left: 10, bottom: 15),
+                                padding: const EdgeInsets.only(left: 10, bottom: 15),
                                 child: CircleAvatar(
                                   backgroundColor: Colors.green,
                                   backgroundImage: avatarImageProvider,
@@ -122,63 +141,49 @@ class _UpcomingsState extends State<Upcomings> {
                               ),
                               Expanded(
                                 child: Padding(
-                                  padding: EdgeInsets.only(left: 15),
+                                  padding: const EdgeInsets.only(left: 15, bottom: 22),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
                                         serviceName,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 17,
                                           fontWeight: FontWeight.w800,
                                         ),
                                       ),
-                                      SizedBox(height: 4),
+                                      const SizedBox(height: 4),
                                       Text(
                                         professionalName,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 16,
                                           color: CupertinoColors.activeBlue,
                                         ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            CupertinoIcons.star_fill,
-                                            color: Colors.yellow,
-                                            size: 15,
-                                          ),
-                                          SizedBox(width: 5),
-                                          Text(
-                                            rating,
-                                            style: TextStyle(fontWeight: FontWeight.w800),
-                                          ),
-                                          SizedBox(width: 8),
-                                          Icon(
-                                            Icons.location_on,
-                                            color: Colors.red,
-                                            size: 16,
-                                          ),
-                                          Text(distance),
-                                        ],
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsets.only(right: 15.0, bottom: 58.0),
-                                child: Text(
-                                  "₹${displayPrice.toStringAsFixed(0)}",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                              )
+                              // Fetch and display basePrice from partners collection dynamically
+                              FutureBuilder<double>(
+                                future: _fetchPartnerBasePrice(partnerId, initialPrice),
+                                builder: (context, priceSnapshot) {
+                                  double displayPrice = priceSnapshot.data ?? initialPrice;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 15.0, bottom: 58.0),
+                                    child: Text(
+                                      "₹${displayPrice.toStringAsFixed(0)}",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.blue[800],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         ),

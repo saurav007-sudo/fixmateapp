@@ -135,28 +135,7 @@ class _CancelledState extends State<Cancelled> {
                                                     color: CupertinoColors.activeBlue,
                                                   ),
                                                 ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      CupertinoIcons.star_fill,
-                                                      color: Colors.yellow,
-                                                      size: 15,
-                                                    ),
-                                                    const SizedBox(width: 5),
-                                                    Text(
-                                                      cancelledBooking.rating,
-                                                      style: const TextStyle(fontWeight: FontWeight.w800),
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    const Icon(
-                                                      Icons.location_on,
-                                                      color: Colors.red,
-                                                      size: 16,
-                                                    ),
-                                                    Text(cancelledBooking.distance),
-                                                  ],
-                                                ),
+
                                               ],
                                             ),
                                           ),

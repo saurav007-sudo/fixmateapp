@@ -7,7 +7,7 @@ import '../viewmodel/editaddress viewmodel.dart';
 class EditAddressPage extends StatefulWidget {
   final String? addressId;
 
-  const EditAddressPage({super.key, this.addressId});
+  const EditAddressPage({super.key, this.addressId, String? selectedAddressId});
 
   @override
   State<EditAddressPage> createState() => _EditAddressPageState();

@@ -10,16 +10,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class EditProfilePage extends StatefulWidget {
   final String initialName;
   final String initialEmail;
-  final String initialPhone;
-  final String initialDob;
   final String initialImagePath;
 
   EditProfilePage({
     super.key,
     required this.initialName,
     required this.initialEmail,
-    required this.initialPhone,
-    required this.initialDob,
     required this.initialImagePath,
   });
 
@@ -30,8 +26,6 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController nameController;
   late TextEditingController emailController;
-  late TextEditingController phoneController;
-  late TextEditingController dobController;
 
   XFile? selectedImageFile;
   bool isSaving = false;
@@ -41,16 +35,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.initState();
     nameController = TextEditingController(text: widget.initialName);
     emailController = TextEditingController(text: widget.initialEmail);
-    phoneController = TextEditingController(text: widget.initialPhone);
-    dobController = TextEditingController(text: widget.initialDob);
   }
 
   @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
-    phoneController.dispose();
-    dobController.dispose();
     super.dispose();
   }
 
@@ -111,8 +101,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         await FirebaseFirestore.instance.collection('users').doc(uid).set({
           'name': nameController.text.trim(),
           'email': emailController.text.trim(),
-          'phone': phoneController.text.trim(),
-          'dob': dobController.text.trim(),
           'profileImage': imageUrl,
         }, SetOptions(merge: true));
       }
@@ -228,10 +216,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     _buildTextField("Full Name", CupertinoIcons.person, nameController),
                     SizedBox(height: 15),
                     _buildTextField("Email Address", CupertinoIcons.mail, emailController, keyboardType: TextInputType.emailAddress),
-                    SizedBox(height: 15),
-                    _buildTextField("Phone Number", CupertinoIcons.phone, phoneController, keyboardType: TextInputType.phone),
-                    SizedBox(height: 15),
-                    _buildTextField("Date of Birth", CupertinoIcons.calendar, dobController),
                   ],
                 ),
               ),

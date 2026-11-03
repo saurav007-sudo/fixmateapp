@@ -116,54 +116,6 @@ class _ProfessionalState extends State<Professional> {
                             ],
                           ),
                         ),
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          child: Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.star_fill,
-                                color: Colors.amber,
-                                size: 24,
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(left: 7),
-                                child: Text(
-                                  "4.9",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(left: 5),
-                                child: Text(
-                                  "(320 reviews)",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 15),
-                              Icon(
-                                Icons.location_on,
-                                color: Colors.red,
-                                size: 23,
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(left: 6),
-                                child: Text(
-                                  "2.2 km",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 15, vertical: 18),
                           child: SizedBox(
@@ -300,7 +252,7 @@ class _ProfessionalState extends State<Professional> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => Booknow(partnerId: widget.partnerId),
+                                  builder: (context) => Booknow(partnerId: widget.partnerId, existingDocId: '',),
                                 ),
                               );
                             },
