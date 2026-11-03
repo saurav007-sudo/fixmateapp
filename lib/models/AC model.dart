@@ -18,6 +18,24 @@ class TechnicianModel {
   });
 
   factory TechnicianModel.fromMap(Map<String, dynamic> map, String docId) {
+    // Check all possible Firestore image fields
+    var rawImage = map['profileImage'] ??
+        map['imageUrl'] ??
+        map['image'] ??
+        map['profileUrl'] ??
+        map['professionalImage'] ??
+        map['photo'] ??
+        map['avatar'] ??
+        map['img'];
+
+    // Convert to string and trim
+    String imageStr = rawImage?.toString().trim() ?? '';
+
+    // If the string is empty or just whitespace, use the local asset fallback
+    String resolvedImage = imageStr.isNotEmpty
+        ? imageStr
+        : "assets/44-extractpics.jpg";
+
     return TechnicianModel(
       id: docId,
       name: map['name'] ?? map['fullName'] ?? "Technician",
@@ -25,7 +43,7 @@ class TechnicianModel {
       price: map['basePrice']?.toString() ?? map['price'] ?? "599",
       rating: map['rating']?.toString() ?? "4.9 (98)",
       distance: map['distance'] ?? "2.2 Km",
-      image: map['image'] ?? "lib/asset/44-extractpics.jpg",
+      image: resolvedImage,
     );
   }
 }

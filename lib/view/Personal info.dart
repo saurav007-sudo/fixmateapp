@@ -38,8 +38,6 @@ class _PersonalState extends State<Personal> {
 
             String name = userData['name'] ?? userData['fullName'] ?? currentUser?.displayName ?? "Saurav K";
             String email = userData['email'] ?? currentUser?.email ?? "ksaurath@gmail.com";
-            String phone = userData['phone'] ?? userData['phoneNumber'] ?? currentUser?.phoneNumber ?? "+91 6282716279";
-            String dob = userData['dob'] ?? "08/12/2003";
             String imagePath = userData['profileImage'] ?? "lib/asset/44-extractpics.jpg";
 
             ImageProvider avatarImage = imagePath.startsWith('http')
@@ -81,8 +79,6 @@ class _PersonalState extends State<Personal> {
                               builder: (context) => EditProfilePage(
                                 initialName: name,
                                 initialEmail: email,
-                                initialPhone: phone,
-                                initialDob: dob,
                                 initialImagePath: imagePath,
                               ),
                             ),
@@ -157,10 +153,6 @@ class _PersonalState extends State<Personal> {
                         _buildInfoRow(CupertinoIcons.person, "Full name", name),
                         _divider(),
                         _buildInfoRow(CupertinoIcons.mail, "Email address", email),
-                        _divider(),
-                        _buildInfoRow(CupertinoIcons.phone, "Phone number", phone),
-                        _divider(),
-                        _buildInfoRow(CupertinoIcons.calendar, "Date of Birth", dob),
                       ],
                     ),
                   ),

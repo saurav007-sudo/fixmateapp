@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fixmate/view/Mybookings.dart';
 import 'package:fixmate/view/Personal%20info.dart';
+import 'package:fixmate/view/login.dart';
 import 'package:fixmate/view/privacy%20rules.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,21 +22,25 @@ class _ProfileState extends State<Profile> {
   final List<IconData> accountIcons = [
     CupertinoIcons.person_fill,
     CupertinoIcons.location_fill,
+    CupertinoIcons.lock_fill,
   ];
 
   final List<String> accountTitle = [
     "Personal Information",
     "My Addresses",
+    "Privacy",
   ];
 
   final List<String> accountSubtitle = [
     "Name, phone, email",
     "Home, Work, Others",
+    "Privacy policy and rules",
   ];
 
   final List<Color> accountColors = [
-    Color(0xFFE1F0FF),
-    Color(0xFFDDF8F0),
+    const Color(0xFFE1F0FF),
+    const Color(0xFFDDF8F0),
+    const Color(0xFFFFF4E5),
   ];
 
   Future<void> _logout(BuildContext context) async {
@@ -43,16 +48,16 @@ class _ProfileState extends State<Profile> {
       bool? confirm = await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Logout"),
-          content: Text("Are you sure you want to log out?"),
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to log out?"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text("Cancel"),
+              child: const Text("Cancel"),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text("Logout", style: TextStyle(color: Colors.red)),
+              child: const Text("Logout", style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
@@ -60,7 +65,14 @@ class _ProfileState extends State<Profile> {
 
       if (confirm == true) {
         await FirebaseAuth.instance.signOut();
+
         if (!mounted) return;
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => Login()),
+              (route) => false,
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -75,20 +87,30 @@ class _ProfileState extends State<Profile> {
     String userId = currentUser?.uid ?? '';
 
     return Scaffold(
-      backgroundColor: Color(0xFFEFF9FF),
+      backgroundColor: const Color(0xFFEFF9FF),
       body: SafeArea(
         child: StreamBuilder<DocumentSnapshot>(
           stream: userId.isNotEmpty
               ? FirebaseFirestore.instance.collection('users').doc(userId).snapshots()
               : null,
           builder: (context, snapshot) {
-            String userName = currentUser?.displayName ?? "Saurav K";
+            // Fallback default name if Firestore document is still loading or missing
+            String userName = currentUser?.displayName ?? "User";
             String profileImagePath = "lib/asset/44-extractpics.jpg";
 
             if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
               var userData = snapshot.data!.data() as Map<String, dynamic>?;
-              userName = userData?['name'] ?? userData?['fullName'] ?? userName;
-              profileImagePath = userData?['profileImage'] ?? profileImagePath;
+
+              // Checks multiple common key variations for the user's name
+              userName = userData?['name'] ??
+                  userData?['fullName'] ??
+                  userData?['userName'] ??
+                  currentUser?.displayName ??
+                  "User";
+
+              profileImagePath = userData?['profileImage'] ??
+                  userData?['imageUrl'] ??
+                  profileImagePath;
             }
 
             ImageProvider avatarImage = profileImagePath.startsWith('http')
@@ -97,7 +119,7 @@ class _ProfileState extends State<Profile> {
 
             return ListView(
               children: [
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Text(
                     "FIXMATE",
@@ -105,7 +127,7 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Row(
                     children: [
                       CircleAvatar(
@@ -114,7 +136,7 @@ class _ProfileState extends State<Profile> {
                         backgroundImage: avatarImage,
                       ),
                       Padding(
-                        padding: EdgeInsets.only(left: 20),
+                        padding: const EdgeInsets.only(left: 20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -140,10 +162,10 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => Mybookings()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) =>  Mybookings()));
                     },
                     child: Container(
                       height: 100,
@@ -153,15 +175,15 @@ class _ProfileState extends State<Profile> {
                             color: Colors.grey.withOpacity(0.2),
                             blurRadius: 10,
                             spreadRadius: 2,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           )
                         ],
-                        color: Color(0xFFE8F4FF),
+                        color: const Color(0xFFE8F4FF),
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Row(
                         children: [
-                          Padding(
+                          const Padding(
                             padding: EdgeInsets.only(left: 18.0),
                             child: CircleAvatar(
                               radius: 27,
@@ -174,7 +196,7 @@ class _ProfileState extends State<Profile> {
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.only(left: 25.0),
+                            padding: const EdgeInsets.only(left: 25.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -188,7 +210,7 @@ class _ProfileState extends State<Profile> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(top: 5),
+                                  padding: const EdgeInsets.only(top: 5),
                                   child: Text(
                                     "View your past bookings",
                                     style: TextStyle(
@@ -206,7 +228,7 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -216,7 +238,7 @@ class _ProfileState extends State<Profile> {
                           color: Colors.grey.withOpacity(0.2),
                           blurRadius: 10,
                           spreadRadius: 2,
-                          offset: Offset(0, 4),
+                          offset: const Offset(0, 4),
                         )
                       ],
                     ),
@@ -224,7 +246,7 @@ class _ProfileState extends State<Profile> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20),
                           child: Text(
                             "My Account",
                             style: TextStyle(
@@ -235,18 +257,25 @@ class _ProfileState extends State<Profile> {
                           ),
                         ),
                         SizedBox(
-                          height: 180,
+                          height: 260,
                           child: ListView.builder(
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: 2,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: 3,
                             itemBuilder: (context, index) => Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
                               child: GestureDetector(
                                 onTap: () {
                                   if (index == 0) {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => Personal()));
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) =>  Personal()));
                                   } else if (index == 1) {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => AddressPage()));
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AddressPage()));
+                                  } else if (index == 2) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>  Terms(mdFilename: 'terms.md'),
+                                      ),
+                                    );
                                   }
                                 },
                                 child: Container(
@@ -256,7 +285,7 @@ class _ProfileState extends State<Profile> {
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: Padding(
-                                    padding: EdgeInsets.only(left: 13.0),
+                                    padding: const EdgeInsets.only(left: 13.0),
                                     child: Row(
                                       children: [
                                         CircleAvatar(
@@ -269,7 +298,7 @@ class _ProfileState extends State<Profile> {
                                           ),
                                         ),
                                         Padding(
-                                          padding: EdgeInsets.only(left: 18),
+                                          padding: const EdgeInsets.only(left: 18),
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             mainAxisAlignment: MainAxisAlignment.center,
@@ -302,25 +331,25 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   child: GestureDetector(
                     onTap: () => _logout(context),
                     child: Container(
                       height: 55,
                       decoration: BoxDecoration(
-                        color: Color(0xFFEAF4FF),
+                        color: const Color(0xFFEAF4FF),
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.grey.withOpacity(0.2),
                             blurRadius: 10,
                             spreadRadius: 2,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           )
                         ],
                       ),
                       child: Row(
-                        children: [
+                        children: const [
                           Padding(
                             padding: EdgeInsets.only(left: 25),
                             child: Icon(CupertinoIcons.square_arrow_right, color: Colors.red),

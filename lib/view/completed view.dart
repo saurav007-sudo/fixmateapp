@@ -14,6 +14,27 @@ class Completed extends StatefulWidget {
 }
 
 class _CompletedState extends State<Completed> {
+  // Helper method to fetch basePrice from partners collection
+  Future<double> _fetchPartnerBasePrice(String? partnerId, double fallbackPrice) async {
+    if (partnerId == null || partnerId.isEmpty) return fallbackPrice;
+    try {
+      // Check 'partners' collection first
+      var doc = await FirebaseFirestore.instance.collection('partners').doc(partnerId).get();
+      if (doc.exists && doc.data()?['basePrice'] != null) {
+        return double.tryParse(doc.data()!['basePrice'].toString()) ?? fallbackPrice;
+      }
+
+      // Fallback check 'partner' collection (singular)
+      var docSingular = await FirebaseFirestore.instance.collection('partner').doc(partnerId).get();
+      if (docSingular.exists && docSingular.data()?['basePrice'] != null) {
+        return double.tryParse(docSingular.data()!['basePrice'].toString()) ?? fallbackPrice;
+      }
+    } catch (e) {
+      debugPrint("Error fetching partner base price: $e");
+    }
+    return fallbackPrice;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<CompletedViewModel>(
@@ -56,6 +77,9 @@ class _CompletedState extends State<Completed> {
                       itemBuilder: (context, index) {
                         var bookingData = docs[index].data() as Map<String, dynamic>? ?? {};
                         CompletedBookingModel completedBooking = CompletedBookingModel.fromMap(bookingData);
+
+                        // Extract partnerId from booking data (checks partnerId, technicianId, or providerId)
+                        String? partnerId = bookingData['partnerId'] ?? bookingData['technicianId'] ?? bookingData['providerId'];
 
                         // 1. Extract profile image URL from booking document (checks profileImage, image, imageUrl, partnerImage)
                         String? profileImageUrl = bookingData['profileImage'] ??
@@ -115,55 +139,46 @@ class _CompletedState extends State<Completed> {
                                           style: const TextStyle(fontSize: 15, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w700),
                                         ),
                                         const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            const Icon(CupertinoIcons.star_fill, color: Colors.yellow, size: 14),
-                                            const SizedBox(width: 4),
-                                            Text(completedBooking.rating, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                                            const SizedBox(width: 10),
-                                            const Icon(Icons.location_on, color: Colors.red, size: 14),
-                                            const SizedBox(width: 2),
-                                            Expanded(
-                                              child: Text(
-                                                completedBooking.location,
-                                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
                                       ],
                                     ),
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 15.0),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        "₹${completedBooking.totalAmount.toStringAsFixed(0)}",
-                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.blue),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFDDF8F0),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          "Completed",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                            color: Colors.green[800],
+                                // Fetch and display basePrice dynamically from partners collection
+                                FutureBuilder<double>(
+                                  future: _fetchPartnerBasePrice(partnerId, completedBooking.totalAmount),
+                                  builder: (context, priceSnapshot) {
+                                    double displayPrice = priceSnapshot.data ?? completedBooking.totalAmount;
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 15.0),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            "₹${displayPrice.toStringAsFixed(0)}",
+                                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.blue),
                                           ),
-                                        ),
+                                          const SizedBox(height: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFDDF8F0),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              "Completed",
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w800,
+                                                color: Colors.green[800],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),

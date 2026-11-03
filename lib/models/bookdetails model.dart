@@ -2,6 +2,7 @@ class BookingDetailsModel {
   final String id;
   final String bookingId;
   final String date;
+  final String time;
   final String rating;
   final String image;
   final String description;
@@ -13,6 +14,7 @@ class BookingDetailsModel {
     required this.id,
     required this.bookingId,
     required this.date,
+    required this.time,
     required this.rating,
     required this.image,
     required this.description,
@@ -25,7 +27,8 @@ class BookingDetailsModel {
     return BookingDetailsModel(
       id: docId,
       bookingId: map['bookingId'] ?? '#${docId.substring(0, 6).toUpperCase()}',
-      date: map['date'] ?? "25 Sep 2025 - 10:00 AM",
+      date: map['date'] ?? "25 Sep 2025",
+      time: map['time'] ?? "10:00 AM", // 3. Extracted from Firestore map
       rating: map['rating'] ?? "4.9",
       image: map['image'] ?? "lib/asset/44-extractpics.jpg",
       description: map['description'] ?? "The power sockets are not working",

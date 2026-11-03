@@ -1,16 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fixmate/view/bookdetails%20view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../view/booking confirmed view.dart';
+import 'address view.dart';
+import 'editaddress view.dart';
 
 class Booknow extends StatefulWidget {
   final String? partnerId;
+  final String? selectedAddressId;
 
-  const Booknow({super.key, this.partnerId});
+  const Booknow({super.key, this.partnerId, this.selectedAddressId, required String existingDocId}); // <-- Included in constructor
 
   @override
   State<Booknow> createState() => _BooknowState();
@@ -62,20 +66,39 @@ class _BooknowState extends State<Booknow> {
     }
   }
 
-  Stream<QuerySnapshot> getAddressStream() {
+  Stream<DocumentSnapshot?> getSelectedAddressStream() {
     String userId = FirebaseAuth.instance.currentUser?.uid ?? 'sample_user';
-    return FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('addresses')
-        .limit(1)
-        .snapshots();
+
+    if (widget.selectedAddressId != null && widget.selectedAddressId!.isNotEmpty) {
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('addresses')
+          .doc(widget.selectedAddressId)
+          .snapshots()
+          .map((doc) => doc.exists ? doc : null);
+    } else {
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('addresses')
+          .limit(1)
+          .snapshots()
+          .map((snapshot) => snapshot.docs.isNotEmpty ? snapshot.docs.first : null);
+    }
   }
 
   Future<void> createBookingInFirestore(BuildContext context, String fetchedAddress) async {
     if (selectedTimeIndex == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select a time slot")),
+      );
+      return;
+    }
+
+    if (fetchedAddress.isEmpty || fetchedAddress == "Select address") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a valid service address")),
       );
       return;
     }
@@ -95,7 +118,7 @@ class _BooknowState extends State<Booknow> {
       String basePrice = '299';
       String serviceName = 'General Service';
       String targetPartnerId = widget.partnerId ?? '';
-      String partnerProfileImage = 'lib/asset/44-extractpics.jpg';
+      String partnerProfileImage = 'assets/44-extractpics.jpg';
 
       if (widget.partnerId != null && widget.partnerId!.isNotEmpty) {
         DocumentSnapshot partnerDoc = await FirebaseFirestore.instance
@@ -250,9 +273,14 @@ class _BooknowState extends State<Booknow> {
             padding: const EdgeInsets.all(8.0),
             child: TableCalendar(
               focusedDay: today,
-              firstDay: DateTime.utc(2003, 1, 1),
+              firstDay: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
               lastDay: DateTime.utc(2026, 12, 31),
-              onDaySelected: selectDay,
+              onDaySelected: (selectedDay, focusedDay) {
+                if (selectedDay.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))) {
+                  return;
+                }
+                selectDay(selectedDay, focusedDay);
+              },
               selectedDayPredicate: (day) => isSameDay(day, today),
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
@@ -270,6 +298,7 @@ class _BooknowState extends State<Booknow> {
                   color: Colors.yellow,
                   shape: BoxShape.circle,
                 ),
+                disabledTextStyle: TextStyle(color: Colors.grey),
               ),
             ),
           ),
@@ -385,15 +414,17 @@ class _BooknowState extends State<Booknow> {
               ),
             ),
           ),
-          StreamBuilder<QuerySnapshot>(
-            stream: getAddressStream(),
+          StreamBuilder<DocumentSnapshot?>(
+            stream: getSelectedAddressStream(),
             builder: (context, addressSnapshot) {
               String displayAddress = "Select address";
+              String? activeAddressId = widget.selectedAddressId;
 
-              if (addressSnapshot.hasData && addressSnapshot.data!.docs.isNotEmpty) {
-                var addressData = addressSnapshot.data!.docs.first.data() as Map<String, dynamic>;
+              if (addressSnapshot.hasData && addressSnapshot.data != null && addressSnapshot.data!.exists) {
+                var addressData = addressSnapshot.data!.data() as Map<String, dynamic>;
                 String house = addressData['house'] ?? '';
                 String fullAddress = addressData['address'] ?? '';
+                activeAddressId = addressSnapshot.data!.id;
 
                 if (house.isNotEmpty && fullAddress.isNotEmpty) {
                   displayAddress = "$house\n$fullAddress";
@@ -408,50 +439,65 @@ class _BooknowState extends State<Booknow> {
                   right: 15,
                   top: 10,
                 ),
-                child: Container(
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: Colors.blueGrey,
+                child: GestureDetector(
+                  onTap: () async {
+                    final resultId = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddressPage(),
+                      ),
+                    );
+                    if (resultId != null && resultId is String) {
+                      setState(() {
+                        // Rebuild with newly chosen address ID
+                      });
+                    }
+                  },
+                  child: Container(
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                        color: Colors.blueGrey,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: CircleAvatar(
-                          radius: 23,
-                          backgroundColor: Color(0xFFE6F2FF),
-                          child: Icon(
-                            CupertinoIcons.location_fill,
-                            color: Colors.blue,
-                            size: 23,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 12, right: 12),
-                          child: Text(
-                            displayAddress,
-                            style: const TextStyle(
-                              fontSize: 15,
+                    child: Row(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(left: 10),
+                          child: CircleAvatar(
+                            radius: 23,
+                            backgroundColor: Color(0xFFE6F2FF),
+                            child: Icon(
+                              CupertinoIcons.location_fill,
+                              color: Colors.blue,
+                              size: 23,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(right: 12),
-                        child: Icon(
-                          CupertinoIcons.chevron_right,
-                          color: Colors.blue,
-                          size: 25,
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 12, right: 12),
+                            child: Text(
+                              displayAddress,
+                              style: const TextStyle(
+                                fontSize: 15,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        const Padding(
+                          padding: EdgeInsets.only(right: 12),
+                          child: Icon(
+                            CupertinoIcons.chevron_right,
+                            color: Colors.blue,
+                            size: 25,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -464,12 +510,12 @@ class _BooknowState extends State<Booknow> {
               top: 25,
               bottom: 20,
             ),
-            child: StreamBuilder<QuerySnapshot>(
-              stream: getAddressStream(),
+            child: StreamBuilder<DocumentSnapshot?>(
+              stream: getSelectedAddressStream(),
               builder: (context, addressSnapshot) {
                 String fetchedAddress = "";
-                if (addressSnapshot.hasData && addressSnapshot.data!.docs.isNotEmpty) {
-                  var addressData = addressSnapshot.data!.docs.first.data() as Map<String, dynamic>;
+                if (addressSnapshot.hasData && addressSnapshot.data != null && addressSnapshot.data!.exists) {
+                  var addressData = addressSnapshot.data!.data() as Map<String, dynamic>;
                   String house = addressData['house'] ?? '';
                   String fullAddress = addressData['address'] ?? '';
                   fetchedAddress = fullAddress.isNotEmpty ? fullAddress : house;

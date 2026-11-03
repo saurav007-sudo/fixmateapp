@@ -270,7 +270,7 @@ class _HomeState extends State<Home> {
                       children: [
                         Padding(
                           padding: EdgeInsets.only(left: 14),
-                          child: Text("Nearby Professionals", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                          child: Text("Top Professionals", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                         ),
                         Spacer(),
                       ],
@@ -298,7 +298,7 @@ class _HomeState extends State<Home> {
                         if (homeViewModel.filteredCategories.isEmpty) {
                           return Padding(
                             padding: EdgeInsets.all(15.0),
-                            child: Text("No verified professionals nearby yet.", style: TextStyle(color: Colors.grey)),
+                            child: Text("No verified professionals .", style: TextStyle(color: Colors.grey)),
                           );
                         }
 
@@ -370,19 +370,7 @@ class _HomeState extends State<Home> {
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
-                                              Padding(
-                                                padding: EdgeInsets.only(left: 10, top: 4),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(CupertinoIcons.star_fill, color: Colors.yellow, size: 14),
-                                                    SizedBox(width: 4),
-                                                    Text("4.9", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                                                    SizedBox(width: 6),
-                                                    Icon(Icons.location_on, color: Colors.red, size: 14),
-                                                    Text("2.2 Km", style: TextStyle(fontSize: 12)),
-                                                  ],
-                                                ),
-                                              )
+
                                             ],
                                           ),
                                         )

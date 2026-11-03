@@ -1,3 +1,4 @@
+import 'package:fixmate/view/Mybookings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -67,28 +68,9 @@ class _ConfirmState extends State<Confirm> {
               style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: Text(
-              "Booking ID : ${confirmData.bookingIdDisplay}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: 18.0),
-            child: Center(
-              child: Text(
-                "${confirmData.technician} will arrive ",
-                style: TextStyle(fontSize: 22),
-              ),
-            ),
-          ),
-          Center(
-            child: Text(
-              "on ${confirmData.formattedDate} at ${confirmData.timeText}",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-          ),
+
+
+
           Padding(
             padding: EdgeInsets.only(top: 88.0),
             child: Row(
@@ -100,7 +82,7 @@ class _ConfirmState extends State<Confirm> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Details()),
+                        MaterialPageRoute(builder: (context) => Mybookings()),
                       );
                     },
                     style: ButtonStyle(
